@@ -1,0 +1,13 @@
+{
+    "name": "jimmyandrade/tonesque",
+    "description": "Grab an average color representation from an image.",
+    "type": "wordpress-plugin",
+    "license": "GNU General Public License v2 or later",
+    "authors": [
+        {
+            "name": "Jimmy Andrade",
+            "email": "paulojimmyandrade@icloud.com"
+        }
+    ],
+    "require": {}
+}

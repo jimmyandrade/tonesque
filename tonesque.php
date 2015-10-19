@@ -1,26 +1,56 @@
 <?php
 /*
 Plugin Name: Tonesque
-Plugin URI: https://github.com/mtias/tonesque
-Description: Class to grab an average color representation from an image.
+Plugin URI: http://github.com/jimmyandrade/tonesque
+Description: Grab an average color representation from an image.
 Version: 1.0
-Author: Matias Ventura
-Author URI: http://matiasventura.com
+Author: Jimmy Andrade, Automattic, Matias Ventura
+Author URI: http://dev.jimmyandrade.com/
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
-
 class Tonesque {
-
-	private $image = '';
+	private $image_url = '';
+	private $image_obj = NULL;
 	private $color = '';
-
-	function __construct( $image ) {
+	function __construct( $image_url ) {
 		if ( ! class_exists( 'Color' ) )
 			require_once __DIR__ . '/class.color.php';
-		$this->image = esc_url_raw( $image );
+		$this->image_url = esc_url_raw( $image_url );
+		$this->image_url = trim( $this->image_url );
+		/**
+		 * Allows any image URL to be passed in for $this->image_url.
+		 *
+		 * @module theme-tools
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param string $image_url The URL to any image
+		 */
+		$this->image_url = apply_filters( 'tonesque_image_url', $this->image_url );
+		$this->image_obj = self::imagecreatefromurl( $this->image_url );
 	}
-
+	public static function imagecreatefromurl( $image_url ) {
+	 	// Grab the extension
+		$file = strtolower( pathinfo( $image_url, PATHINFO_EXTENSION ) );
+		$file = explode( '?', $file );
+		$file = $file[ 0 ];
+		switch ( $file ) {
+			case 'gif' :
+				$image_obj = imagecreatefromgif( $image_url );
+				break;
+			case 'png' :
+				$image_obj = imagecreatefrompng( $image_url );
+				break;
+			case 'jpg' :
+			case 'jpeg' :
+				$image_obj = imagecreatefromjpeg( $image_url );
+				break;
+			default:
+				return false;
+		}
+		return $image_obj;
+	}
 	/**
 	 *
 	 * Construct object from image.
@@ -29,54 +59,31 @@ class Tonesque {
 	 * @return color as a string formatted as $type
 	 *
  	 */
-	function color( $points = 5, $type = 'hex' ) {
+	function color( $type = 'hex' ) {
 		// Bail if there is no image to work with
-	 	if ( ! $this->image )
+	 	if ( ! $this->image_obj )
 			return false;
-
-	 	$image = trim( $this->image );
-
-	 	// Grab the extension
-		$file = strtolower( pathinfo( $image, PATHINFO_EXTENSION ) );
-		$file = explode( '?', $file );
-		$file = $file[ 0 ];
-
-		switch ( $file ) {
-			case 'gif' :
-				$img = imagecreatefromgif( $image );
-				break;
-			case 'png' :
-				$img = imagecreatefrompng( $image );
-				break;
-			case 'jpg' :
-			case 'jpeg' :
-				$img = imagecreatefromjpeg( $image );
-				break;
-			default:
-				return false;
-		}
-
 		// Finds dominant color
-		$color = self::grab_color( $img, $points );
+		$color = self::grab_color();
 		// Passes value to Color class
 		$color = self::get_color( $color, $type );
 		return $color;
 	}
-
 	/**
 	 *
-	 * Finds the average color of the image based on five sample points
+	 * Grabs the color index for each of five sample points of the image
 	 *
 	 * @param $image
-	 * @return array() with rgb color
+	 * @param $type can be 'index' or 'hex'
+	 * @return array() with color indices
 	 *
  	 */
-	function grab_color( $image, $points ) {
-		$img = $image;
-
+	function grab_points( $type = 'index' ) {
+		$img = $this->image_obj;
+		if ( ! $img )
+			return false;
 		$height = imagesy( $img );
 		$width  = imagesx( $img );
-
 		// Sample five points in the image
 		// Based on rule of thirds and center
 		$topy    = round( $height / 3 );
@@ -85,18 +92,39 @@ class Tonesque {
 		$rightx  = round( ( $width / 3 ) * 2 );
 		$centery = round( $height / 2 );
 		$centerx = round( $width / 2 );
-
 		// Cast those colors into an array
-		$rgb = array(
+		$points = array(
 			imagecolorat( $img, $leftx, $topy ),
 			imagecolorat( $img, $rightx, $topy ),
 			imagecolorat( $img, $leftx, $bottomy ),
 			imagecolorat( $img, $rightx, $bottomy ),
 			imagecolorat( $img, $centerx, $centery ),
 		);
-
-		// todo: use $points
-
+		if ( 'hex' == $type ) {
+			foreach ( $points as $i => $p ) {
+				$c = imagecolorsforindex( $img, $p );
+				$points[ $i ] = self::get_color( array(
+					'r' => $c['red'],
+					'g' => $c['green'],
+					'b' => $c['blue'],
+				), 'hex' );
+			}
+		}
+		return $points;
+	}
+	/**
+	 *
+	 * Finds the average color of the image based on five sample points
+	 *
+	 * @param $image
+	 * @return array() with rgb color
+	 *
+ 	 */
+	function grab_color() {
+		$img = $this->image_obj;
+		if ( ! $img )
+			return false;
+		$rgb = self::grab_points();
 		// Process the color points
 		// Find the average representation
 		foreach ( $rgb as $color ) {
@@ -104,34 +132,29 @@ class Tonesque {
 			$r[] = $index['red'];
 			$g[] = $index['green'];
 			$b[] = $index['blue'];
-
-			$red = round( array_sum( $r ) / $points );
-			$green = round( array_sum( $g ) / $points );
-			$blue = round( array_sum( $b ) / $points );
+			$red = round( array_sum( $r ) / 5 );
+			$green = round( array_sum( $g ) / 5 );
+			$blue = round( array_sum( $b ) / 5 );
 		}
-
 		// The average color of the image as rgb array
 		$color = array(
 			'r' => $red,
 			'g' => $green,
 			'b' => $blue,
 		);
-
 		return $color;
 	}
-
 	/**
 	 *
 	 * Get a Color object using /lib class.color
-	 * Convert to appropiatte type
+	 * Convert to appropriate type
 	 *
 	 * @return string
 	 *
- 	 */
+	 */
 	function get_color( $color, $type ) {
 		$c = new Color( $color, 'rgb' );
 		$this->color = $c;
-
 		switch ( $type ) {
 			case 'rgb' :
 				$color = implode( $c->toRgbInt(), ',' );
@@ -145,10 +168,8 @@ class Tonesque {
 			default:
 				return $color = $c->toHex();
 		}
-
 		return $color;
 	}
-
 	/**
 	 *
 	 * Checks contrast against main color
@@ -158,6 +179,8 @@ class Tonesque {
 	 *
  	 */
 	function contrast() {
+	 	if ( ! $this->color )
+			return false;
 		$c = $this->color->getMaxContrastColor();
 		return implode( $c->toRgbInt(), ',' );
 	}

@@ -16,7 +16,6 @@ class Color {
 	 * @var int
 	 */
 	protected $color = 0;
-
 	/**
 	 * Initialize object
 	 *
@@ -51,7 +50,6 @@ class Color {
 			}
 		}
 	}
-
 	/**
 	 * Init color from hex value
 	 *
@@ -73,16 +71,12 @@ class Color {
 			}
 		}
 		$intValue = hexdec( $hexValue );
-
 		if ( $intValue < 0 || $intValue > 16777215 ) {
 			throw new RangeException( $hexValue . " out of valid color code range" );
 		}
-
 		$this->color = $intValue;
-
 		return $this;
 	}
-
 	/**
 	 * Init color from integer RGB values
 	 *
@@ -96,18 +90,13 @@ class Color {
 	{
 		if ( $red < 0 || $red > 255 )
 			throw new RangeException( "Red value " . $red . " out of valid color code range" );
-
 		if ( $green < 0 || $green > 255 )
 			throw new RangeException( "Green value " . $green . " out of valid color code range" );
-
 		if ( $blue < 0 || $blue > 255 )
 			throw new RangeException( "Blue value " . $blue . " out of valid color code range" );
-
 		$this->color = (int)(($red << 16) + ($green << 8) + $blue);
-
 		return $this;
 	}
-
 	/**
 	 * Init color from hex RGB values
 	 *
@@ -121,7 +110,6 @@ class Color {
 	{
 		return $this->fromRgbInt(hexdec($red), hexdec($green), hexdec($blue));
 	}
-
 	/**
 	 * Converts an HSL color value to RGB. Conversion formula
 	 * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
@@ -131,7 +119,6 @@ class Color {
 	 */
 	public function fromHsl( $h, $s, $l ) {
 		$h /= 360; $s /= 100; $l /= 100;
-
 		if ( $s == 0 ) {
 			$r = $g = $b = $l; // achromatic
 		}
@@ -142,10 +129,8 @@ class Color {
 			$g = $this->hue2rgb( $p, $q, $h );
 			$b = $this->hue2rgb( $p, $q, $h - 1/3 );
 		}
-
 		return $this->fromRgbInt( $r * 255, $g * 255, $b * 255 );
 	}
-
 	/**
 	 * Helper function for Color::fromHsl()
 	 */
@@ -157,7 +142,6 @@ class Color {
 		if ( $t < 2/3 ) return $p + ( $q - $p ) * ( 2/3 - $t ) * 6;
 		return $p;
 	}
-
 	/**
 	 * Init color from integer value
 	 *
@@ -169,12 +153,9 @@ class Color {
 	{
 		if ( $intValue < 0 || $intValue > 16777215 )
 			throw new RangeException( $intValue . " out of valid color code range" );
-
 		$this->color = $intValue;
-
 		return $this;
 	}
-
 	/**
 	 * Convert color to hex
 	 *
@@ -182,9 +163,8 @@ class Color {
 	 */
 	public function toHex()
 	{
-		return dechex($this->color);
+		return str_pad(dechex($this->color), 6, '0', STR_PAD_LEFT);
 	}
-
 	/**
 	 * Convert color to RGB array (integer values)
 	 *
@@ -198,7 +178,6 @@ class Color {
 			'blue'  => (int)(255 & ($this->color))
 		);
 	}
-
 	/**
 	 * Convert color to RGB array (hex values)
 	 *
@@ -206,11 +185,12 @@ class Color {
 	 */
 	public function toRgbHex()
 	{
-		return array_map(function($item){
-			return dechex($item);
-		}, $this->toRgbInt());
+		$r = array();
+		foreach ($this->toRgbInt() as $item) {
+			$r[] = dechex($item);
+		}
+		return $r;
 	}
-
 	/**
 	 * Get Hue/Saturation/Value for the current color
 	 * (float values, slow but accurate)
@@ -220,42 +200,35 @@ class Color {
 	public function toHsvFloat()
 	{
 		$rgb = $this->toRgbInt();
-
 		$rgbMin = min($rgb);
 		$rgbMax = max($rgb);
-
 		$hsv = array(
 			'hue'   => 0,
 			'sat'   => 0,
 			'val'   => $rgbMax
 		);
-
 		// If v is 0, color is black
 		if ($hsv['val'] == 0) {
 			return $hsv;
 		}
-
 		// Normalize RGB values to 1
 		$rgb['red'] /= $hsv['val'];
 		$rgb['green'] /= $hsv['val'];
 		$rgb['blue'] /= $hsv['val'];
 		$rgbMin = min($rgb);
 		$rgbMax = max($rgb);
-
 		// Calculate saturation
 		$hsv['sat'] = $rgbMax - $rgbMin;
 		if ($hsv['sat'] == 0) {
 			$hsv['hue'] = 0;
 			return $hsv;
 		}
-
 		// Normalize saturation to 1
 		$rgb['red'] = ($rgb['red'] - $rgbMin) / ($rgbMax - $rgbMin);
 		$rgb['green'] = ($rgb['green'] - $rgbMin) / ($rgbMax - $rgbMin);
 		$rgb['blue'] = ($rgb['blue'] - $rgbMin) / ($rgbMax - $rgbMin);
 		$rgbMin = min($rgb);
 		$rgbMax = max($rgb);
-
 		// Calculate hue
 		if ($rgbMax == $rgb['red']) {
 			$hsv['hue'] = 0.0 + 60 * ($rgb['green'] - $rgb['blue']);
@@ -267,10 +240,8 @@ class Color {
 		} else {
 			$hsv['hue'] = 240 + (60 * ($rgb['red'] - $rgb['green']));
 		}
-
 		return $hsv;
 	}
-
 	/**
 	 * Get HSV values for color
 	 * (integer values from 0-255, fast but less accurate)
@@ -280,28 +251,23 @@ class Color {
 	public function toHsvInt()
 	{
 		$rgb = $this->toRgbInt();
-
 		$rgbMin = min($rgb);
 		$rgbMax = max($rgb);
-
 		$hsv = array(
 			'hue'   => 0,
 			'sat'   => 0,
 			'val'   => $rgbMax
 		);
-
 		// If value is 0, color is black
 		if ($hsv['val'] == 0) {
 			return $hsv;
 		}
-
 		// Calculate saturation
 		$hsv['sat'] = round(255 * ($rgbMax - $rgbMin) / $hsv['val']);
 		if ($hsv['sat'] == 0) {
 			$hsv['hue'] = 0;
 			return $hsv;
 		}
-
 		// Calculate hue
 		if ($rgbMax == $rgb['red']) {
 			$hsv['hue'] = round(0 + 43 * ($rgb['green'] - $rgb['blue']) / ($rgbMax - $rgbMin));
@@ -313,10 +279,8 @@ class Color {
 		if ($hsv['hue'] < 0) {
 			$hsv['hue'] += 255;
 		}
-
 		return $hsv;
 	}
-
 	/**
  * Converts an RGB color value to HSL. Conversion formula
  * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
@@ -356,7 +320,6 @@ class Color {
 		$l = (int) round( $l * 100 );
 		return compact( 'h', 's', 'l' );
 	}
-
 	public function toCSS( $type = 'hex', $alpha = 1 ) {
 		switch ( $type ) {
 			case 'hex':
@@ -387,7 +350,6 @@ class Color {
 				break;
 		}
 	}
-
 	/**
 	 * Get current color in XYZ format
 	 *
@@ -396,31 +358,30 @@ class Color {
 	public function toXyz()
 	{
 		$rgb = $this->toRgbInt();
-
 		// Normalize RGB values to 1
-		$rgb = array_map(function($item){
-			return $item / 255;
-		}, $rgb);
-
-		$rgb = array_map(function($item){
+		$rgb_new = array();
+		foreach ($rgb as $item) {
+			$rgb_new[] = $item / 255;
+		}
+		$rgb = $rgb_new;
+		$rgb_new = array();
+		foreach ($rgb as $item) {
 			if ($item > 0.04045) {
 				$item = pow((($item + 0.055) / 1.055), 2.4);
 			} else {
 				$item = $item / 12.92;
 			}
-			return ($item * 100);
-		}, $rgb);
-
-		//Observer. = 2°, Illuminant = D65
+			$rgb_new[] = $item * 100;
+		}
+		$rgb = $rgb_new;
+		//Observer. = 2Â°, Illuminant = D65
 		$xyz = array(
 			'x' => ($rgb['red'] * 0.4124) + ($rgb['green'] * 0.3576) + ($rgb['blue'] * 0.1805),
 			'y' => ($rgb['red'] * 0.2126) + ($rgb['green'] * 0.7152) + ($rgb['blue'] * 0.0722),
 			'z' => ($rgb['red'] * 0.0193) + ($rgb['green'] * 0.1192) + ($rgb['blue'] * 0.9505)
 		);
-
 		return $xyz;
 	}
-
 	/**
 	 * Get color CIE-Lab values
 	 *
@@ -429,30 +390,26 @@ class Color {
 	public function toLabCie()
 	{
 		$xyz = $this->toXyz();
-
 		//Ovserver = 2*, Iluminant=D65
 		$xyz['x'] /= 95.047;
 		$xyz['y'] /= 100;
 		$xyz['z'] /= 108.883;
-
-		$xyz = array_map(function($item){
+		$xyz_new = array();
+		foreach ($xyz as $item) {
 			if ($item > 0.008856) {
-				//return $item ^ (1/3);
-				return pow($item, 1/3);
+				$xyz_new[] = pow($item, 1/3);
 			} else {
-				return (7.787 * $item) + (16 / 116);
+				$xyz_new[] = (7.787 * $item) + (16 / 116);
 			}
-		}, $xyz);
-
+		}
+		$xyz = $xyz_new;
 		$lab = array(
 			'l' => (116 * $xyz['y']) - 16,
 			'a' => 500 * ($xyz['x'] - $xyz['y']),
 			'b' => 200 * ($xyz['y'] - $xyz['z'])
 		);
-
 		return $lab;
 	}
-
 	/**
 	 * Convert color to integer
 	 *
@@ -462,7 +419,6 @@ class Color {
 	{
 		return $this->color;
 	}
-
 	/**
 	 * Alias of toString()
 	 *
@@ -472,7 +428,6 @@ class Color {
 	{
 		return $this->toString();
 	}
-
 	/**
 	 * Get color as string
 	 *
@@ -480,13 +435,9 @@ class Color {
 	 */
 	public function toString()
 	{
-		$str = (string)$this->toHex();
-		if (strlen($str) < 6) {
-			$str = str_pad($str, 6, '0', STR_PAD_LEFT);
-		}
+		$str = $this->toHex();
 		return strtoupper("#{$str}");
 	}
-
 	/**
 	 * Get the distance between this color and the given color
 	 *
@@ -498,16 +449,13 @@ class Color {
 	{
 		$rgb1 = $this->toRgbInt();
 		$rgb2 = $color->toRgbInt();
-
 		$rDiff = abs($rgb1['red'] - $rgb2['red']);
 		$gDiff = abs($rgb1['green'] - $rgb2['green']);
 		$bDiff = abs($rgb1['blue'] - $rgb2['blue']);
-
 		// Sum of RGB differences
 		$diff = $rDiff + $gDiff + $bDiff;
 		return $diff;
 	}
-
 	/**
 	 * Get distance from the given color using the Delta E method
 	 *
@@ -519,21 +467,16 @@ class Color {
 	{
 		$lab1 = $this->toLabCie();
 		$lab2 = $color->toLabCie();
-
 		$lDiff = abs($lab2['l'] - $lab1['l']);
 		$aDiff = abs($lab2['a'] - $lab1['a']);
 		$bDiff = abs($lab2['b'] - $lab1['b']);
-
 		$delta = sqrt($lDiff + $aDiff + $bDiff);
-
 		return $delta;
 	}
-
 	public function toLuminosity() {
 		extract( $this->toRgbInt() );
 		return 0.2126 * pow( $red / 255, 2.2 ) + 0.7152 * pow( $green / 255, 2.2 ) + 0.0722 * pow( $blue / 255, 2.2);
 	}
-
 	/**
 	 * Get distance between colors using luminance.
 	 * Should be more than 5 for readable contrast
@@ -551,14 +494,12 @@ class Color {
 			return ( $L2 + 0.05 ) / ( $L1 + 0.05 );
 		}
 	}
-
 	public function getMaxContrastColor() {
 		$lum = $this->toLuminosity();
 		$color = new Color;
 		$hex = ( $lum >= 0.5 ) ? '000000' : 'ffffff';
 		return $color->fromHex( $hex );
 	}
-
 	public function getGrayscaleContrastingColor( $contrast = false ) {
 		if ( ! $contrast ) {
 			return $this->getMaxContrastColor();
@@ -567,21 +508,17 @@ class Color {
 		$target_contrast = ( $contrast < 5 ) ? 5 : $contrast;
 		$color = $this->getMaxContrastColor();
 		$contrast = $color->getDistanceLuminosityFrom( $this );
-
 		// if current max contrast is less than the target contrast, we had wishful thinking.
 		if ( $contrast <= $target_contrast ) {
 			return $color;
 		}
-
 		$incr = ( '#000000' === $color->toString() ) ? 1 : -1;
 		while ( $contrast > $target_contrast ) {
 			$color = $color->incrementLightness( $incr );
 			$contrast = $color->getDistanceLuminosityFrom( $this );
 		}
-
 		return $color;
 	}
-
 	/**
 	 * Gets a readable contrasting color. $this is assumed to be the text and $color the background color.
 	 * @param  object $bg_color      A Color object that will be compared against $this
@@ -598,7 +535,6 @@ class Color {
 		$contrast = $bg_color->getDistanceLuminosityFrom( $this );
 		$max_contrast_color = $bg_color->getMaxContrastColor();
 		$max_contrast = $max_contrast_color->getDistanceLuminosityFrom( $bg_color );
-
 		// if current max contrast is less than the target contrast, we had wishful thinking.
 		// still, go max
 		if ( $max_contrast <= $target_contrast ) {
@@ -608,7 +544,6 @@ class Color {
 		if ( $contrast >= $target_contrast ) {
 			return $this;
 		}
-
 		$incr = ( 0 === $max_contrast_color->toInt() ) ? -1 : 1;
 		while ( $contrast < $target_contrast ) {
 			$this->incrementLightness( $incr );
@@ -618,10 +553,8 @@ class Color {
 				break;
 			}
 		}
-
 		return $this;
 	}
-
 	/**
 	 * Detect if color is grayscale
 	 *
@@ -632,15 +565,12 @@ class Color {
 	public function isGrayscale($threshold = 16)
 	{
 		$rgb = $this->toRgbInt();
-
 		// Get min and max rgb values, then difference between them
 		$rgbMin = min($rgb);
 		$rgbMax = max($rgb);
 		$diff = $rgbMax - $rgbMin;
-
 		return $diff < $threshold;
 	}
-
 	/**
 	 * Get the closest matching color from the given array of colors
 	 *
@@ -662,20 +592,15 @@ class Color {
 				$matchKey = $key;
 			}
 		}
-
 		return $matchKey;
 	}
-
 	/* TRANSFORMS */
-
 	public function darken( $amount = 5 ) {
 		return $this->incrementLightness( - $amount );
 	}
-
 	public function lighten( $amount = 5 ) {
 		return $this->incrementLightness( $amount );
 	}
-
 	public function incrementLightness( $amount ) {
 		$hsl = $this->toHsl();
 		extract( $hsl );
@@ -684,15 +609,12 @@ class Color {
 		if ( $l > 100 ) $l = 100;
 		return $this->fromHsl( $h, $s, $l );
 	}
-
 	public function saturate( $amount = 15 ) {
 		return $this->incrementSaturation( $amount );
 	}
-
 	public function desaturate( $amount = 15 ) {
 		return $this->incrementSaturation( - $amount );
 	}
-
 	public function incrementSaturation( $amount ) {
 		$hsl = $this->toHsl();
 		extract( $hsl );
@@ -701,38 +623,31 @@ class Color {
 		if ( $s > 100 ) $s = 100;
 		return $this->fromHsl( $h, $s, $l );
 	}
-
 	public function toGrayscale() {
 		$hsl = $this->toHsl();
 		extract( $hsl );
 		$s = 0;
 		return $this->fromHsl( $h, $s, $l );
 	}
-
 	public function getComplement() {
 		return $this->incrementHue( 180 );
 	}
-
 	public function getSplitComplement( $step = 1 ) {
 		$incr = 180 + ( $step * 30 );
 		return $this->incrementHue( $incr );
 	}
-
 	public function getAnalog( $step = 1 ) {
 		$incr = $step * 30;
 		return $this->incrementHue( $incr );
 	}
-
 	public function getTetrad( $step = 1 ) {
 		$incr = $step * 60;
 		return $this->incrementHue( $incr );
 	}
-
 	public function getTriad( $step = 1 ) {
 		$incr = $step * 120;
 		return $this->incrementHue( $incr );
 	}
-
 	public function incrementHue( $amount ) {
 		$hsl = $this->toHsl();
 		extract( $hsl );
@@ -740,5 +655,4 @@ class Color {
 		if ( $h < 0 ) $h = 360 - $h;
 		return $this->fromHsl( $h, $s, $l );
 	}
-
 } // class Color

@@ -1,0 +1,29 @@
+{
+  "name": "tonesque",
+  "version": "1.0.0",
+  "description": "Grab an average color representation from an image.",
+  "main": "tonesque.php",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimmyandrade/tonesque.git"
+  },
+  "keywords": [
+    "tonesque",
+    "color",
+    "image",
+    "theme",
+    "tools",
+    "average",
+    "color",
+    "processing"
+  ],
+  "author": "Jimmy Andrade <paulojimmyandrade@icloud.com>",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/jimmyandrade/tonesque/issues"
+  },
+  "homepage": "https://github.com/jimmyandrade/tonesque#readme"
+}

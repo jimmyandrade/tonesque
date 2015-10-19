@@ -1,0 +1,31 @@
+{
+  "name": "tonesque",
+  "version": "1.0.0",
+  "homepage": "https://github.com/jimmyandrade/tonesque",
+  "authors": [
+    "Matias Ventura",
+    "Automattic"
+    "Jimmy Andrade <paulojimmyandrade@icloud.com>"
+  ],
+  "description": "Grab an average color representation from an image.",
+  "main": "tonesque.php",
+  "moduleType": [],
+  "keywords": [
+    "tonesque",
+    "color",
+    "image",
+    "theme",
+    "tools",
+    "average",
+    "color",
+    "processing"
+  ],
+  "license": "GNU General Public License v2 or later",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
